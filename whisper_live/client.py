@@ -33,6 +33,7 @@ class Client:
         log_transcription=True,
         max_clients=4,
         max_connection_time=600,
+        compute_type=None,
     ):
         """
         Initializes a Client instance for audio recording and streaming to a server.
@@ -52,6 +53,7 @@ class Client:
             log_transcription (bool, optional): Whether to log transcription output to the console. Default is True.
             max_clients (int, optional): Maximum number of client connections allowed. Default is 4.
             max_connection_time (int, optional): Maximum allowed connection time in seconds. Default is 600.
+            compute_type (str, optional): The compute type for the model. If None, will be auto-detected. Default is None.
         """
         self.recording = False
         self.task = "transcribe"
@@ -69,6 +71,7 @@ class Client:
         self.log_transcription = log_transcription
         self.max_clients = max_clients
         self.max_connection_time = max_connection_time
+        self.compute_type = compute_type
 
         if translate:
             self.task = "translate"
@@ -212,6 +215,7 @@ class Client:
                     "use_vad": self.use_vad,
                     "max_clients": self.max_clients,
                     "max_connection_time": self.max_connection_time,
+                    "compute_type": self.compute_type,
                 }
             )
         )
@@ -682,6 +686,7 @@ class TranscriptionClient(TranscriptionTeeClient):
         max_clients (int, optional): Maximum number of client connections allowed. Default is 4.
         max_connection_time (int, optional): Maximum allowed connection time in seconds. Default is 600.
         mute_audio_playback (bool, optional): If True, mutes audio playback during file playback. Default is False.
+        compute_type (str, optional): The compute type for the model. If None, will be auto-detected. Default is None.
 
     Attributes:
         client (Client): An instance of the underlying Client class responsible for handling the WebSocket connection.
@@ -708,11 +713,12 @@ class TranscriptionClient(TranscriptionTeeClient):
         max_clients=4,
         max_connection_time=600,
         mute_audio_playback=False,
+        compute_type=None,
     ):
         self.client = Client(
             host, port, lang, translate, model, srt_file_path=output_transcription_path,
             use_vad=use_vad, log_transcription=log_transcription, max_clients=max_clients,
-            max_connection_time=max_connection_time
+            max_connection_time=max_connection_time, compute_type=compute_type
         )
 
         if save_output_recording and not output_recording_filename.endswith(".wav"):

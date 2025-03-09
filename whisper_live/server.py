@@ -196,6 +196,7 @@ class TranscriptionServer:
                     vad_parameters=options.get("vad_parameters"),
                     use_vad=self.use_vad,
                     single_model=self.single_model,
+                    compute_type=options.get('compute_type'),
                 )
 
                 logging.info("Running faster_whisper backend.")
@@ -768,7 +769,7 @@ class ServeClientFasterWhisper(ServeClientBase):
     SINGLE_MODEL_LOCK = threading.Lock()
 
     def __init__(self, websocket, task="transcribe", device=None, language=None, client_uid=None, model="small.en",
-                 initial_prompt=None, vad_parameters=None, use_vad=True, single_model=False):
+                 initial_prompt=None, vad_parameters=None, use_vad=True, single_model=False, compute_type=None):
         """
         Initialize a ServeClient instance.
         The Whisper model is initialized based on the client's language and device availability.
@@ -784,6 +785,7 @@ class ServeClientFasterWhisper(ServeClientBase):
             model (str, optional): The whisper model size. Defaults to 'small.en'
             initial_prompt (str, optional): Prompt for whisper inference. Defaults to None.
             single_model (bool, optional): Whether to instantiate a new model for each client connection. Defaults to False.
+            compute_type (str, optional): The compute type for the model. If None, will be auto-detected. Defaults to None.
         """
         super().__init__(client_uid, websocket)
         self.model_sizes = [
@@ -803,11 +805,14 @@ class ServeClientFasterWhisper(ServeClientBase):
         self.end_time_for_same_output = None
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        if device == "cuda":
-            major, _ = torch.cuda.get_device_capability(device)
-            self.compute_type = "float16" if major >= 7 else "float32"
+        if compute_type is None:
+            if device == "cuda":
+                major, _ = torch.cuda.get_device_capability(device)
+                self.compute_type = "float16" if major >= 7 else "float32"
+            else:
+                self.compute_type = "int8"
         else:
-            self.compute_type = "int8"
+            self.compute_type = compute_type
 
         if self.model_size_or_path is None:
             return
