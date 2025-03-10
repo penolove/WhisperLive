@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  whisper-live:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gpu
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./whisper_live:/app/whisper_live
+      - ./run_server.py:/app/run_server.py
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    command: python run_server.py --port 9090 --backend faster_whisper 
